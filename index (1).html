@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Guitare">
+<title>🎸 Mon Répertoire</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0f0f0f;--bg2:#1a1a1a;--bg3:#242424;--bg4:#2e2e2e;
+  --border:rgba(255,255,255,0.09);--border2:rgba(255,255,255,0.16);
+  --text:#f0f0f0;--muted:#666;--muted2:#999;
+  --accent:#c8a96e;--accent2:#e0c48a;
+  --green:#4ade80;--orange:#fb923c;--red:#f87171;--yellow:#fbbf24;--blue:#60a5fa;--gray:#64748b;
+  --radius:12px;--radius-sm:8px;
+}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;font-size:15px;min-height:100vh;padding-bottom:calc(72px + env(safe-area-inset-bottom,0px))}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:0.5px solid var(--border);display:grid;grid-template-columns:repeat(4,1fr);padding-bottom:env(safe-area-inset-bottom,0px);z-index:30}
+.nav-item{display:flex;flex-direction:column;align-items:center;padding:10px 4px 8px;cursor:pointer;gap:3px}
+.nav-item .ni{font-size:20px;line-height:1}
+.nav-item .nl{font-size:10px;color:var(--muted);font-weight:500}
+.nav-item.on .nl{color:var(--accent)}
+.nav-item.on .ni{filter:drop-shadow(0 0 4px rgba(200,169,110,0.6))}
+.page{display:none}.page.on{display:block}
+header{background:var(--bg2);padding:16px 16px 0;padding-top:calc(14px + env(safe-area-inset-top,0px));position:sticky;top:0;z-index:20;border-bottom:0.5px solid var(--border)}
+.header-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+header h1{font-size:19px;font-weight:700;letter-spacing:-0.4px;color:var(--accent)}
+header p{font-size:11px;color:var(--muted);margin-top:1px}
+.add-btn{background:var(--accent);color:#111;border:none;border-radius:var(--radius-sm);padding:7px 13px;font-size:13px;font-weight:600;cursor:pointer;flex-shrink:0}
+.search-wrap{padding:0 0 9px;position:relative}
+.search-wrap input{width:100%;background:var(--bg3);border:0.5px solid var(--border);border-radius:10px;padding:9px 36px;font-size:14px;color:var(--text);outline:none;-webkit-appearance:none}
+.si{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:13px;pointer-events:none}
+.sc{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:var(--bg4);border:none;color:var(--muted);width:20px;height:20px;border-radius:50%;font-size:11px;cursor:pointer;display:none;align-items:center;justify-content:center}
+.chips{display:flex;gap:7px;padding-bottom:9px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex-shrink:0;padding:5px 11px;border-radius:20px;border:0.5px solid var(--border);background:var(--bg3);color:var(--muted2);font-size:12px;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:4px}
+.chip.on{background:var(--accent);color:#111;border-color:var(--accent);font-weight:600}
+.chip-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.stabs{display:flex;border-bottom:0.5px solid var(--border)}
+.stab{flex:1;padding:8px 4px;text-align:center;font-size:11px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;font-weight:500}
+.stab.on{color:var(--accent);border-bottom-color:var(--accent)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;padding:11px 16px 4px}
+.stat{background:var(--bg2);border-radius:var(--radius-sm);padding:8px 6px;text-align:center;border:0.5px solid var(--border)}
+.stat-n{font-size:18px;font-weight:700;line-height:1}
+.stat-l{font-size:9px;color:var(--muted);margin-top:2px;line-height:1.3}
+.section{margin-bottom:6px}
+.sec-label{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;padding:11px 16px 4px;display:flex;align-items:center;gap:6px}
+.sec-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.sgroup{margin:0 16px;border-radius:var(--radius);overflow:hidden;background:var(--bg2)}
+.song{padding:10px 13px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:10px;cursor:pointer;transition:background 0.1s}
+.song:last-child{border-bottom:none}
+.song:active{background:var(--bg3)}
+.sdot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot-acquired{background:var(--green)}.dot-todo{background:var(--orange);box-shadow:0 0 4px rgba(251,146,60,0.5)}.dot-archive{background:var(--gray)}
+.si2{flex:1;min-width:0}
+.stitle{font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.smeta{font-size:11px;color:var(--muted);margin-top:1px;display:flex;align-items:center;gap:5px}
+.sright{display:flex;align-items:center;gap:5px;flex-shrink:0}
+.dbadge{font-size:10px;padding:2px 5px;border-radius:4px;white-space:nowrap}
+.diff-D{background:rgba(74,222,128,0.1);color:#4ade80}
+.diff-I{background:rgba(251,191,36,0.1);color:#fbbf24}
+.diff-A{background:rgba(248,113,113,0.1);color:#f87171}
+.play-btn{background:var(--bg3);border:0.5px solid var(--border2);color:var(--accent);font-size:14px;width:30px;height:30px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.play-btn:active{background:var(--accent);color:#111}
+.freq-bar{height:3px;border-radius:2px;margin-top:3px;background:var(--bg4);overflow:hidden;min-width:40px}
+.freq-fill{height:100%;border-radius:2px;background:var(--accent);transition:width 0.3s}
+.last-played{font-size:10px;color:var(--muted)}
+.empty{padding:44px 16px;text-align:center;color:var(--muted);font-size:14px}
+.empty-icon{font-size:30px;margin-bottom:8px}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:100;display:none;align-items:flex-end;justify-content:center}
+.overlay.open{display:flex}
+.modal{background:var(--bg2);border-radius:20px 20px 0 0;width:100%;max-width:560px;padding:18px 18px;padding-bottom:calc(18px + env(safe-area-inset-bottom,0px));animation:slideUp 0.22s ease;max-height:92vh;overflow-y:auto}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.mhandle{width:36px;height:4px;background:var(--bg4);border-radius:2px;margin:0 auto 16px}
+.modal h2{font-size:16px;font-weight:600;margin-bottom:14px}
+.field{margin-bottom:11px}
+.field label{font-size:11px;color:var(--muted);display:block;margin-bottom:4px;font-weight:500;text-transform:uppercase;letter-spacing:0.5px}
+.field input,.field select{width:100%;background:var(--bg3);border:0.5px solid var(--border2);border-radius:var(--radius-sm);padding:10px 12px;font-size:14px;color:var(--text);outline:none;-webkit-appearance:none;appearance:none}
+.field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23777' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;padding-right:30px}
+.field select option{background:#1a1a1a}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.mbtns{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}
+.btn-cancel{background:var(--bg3);color:var(--muted2);border:0.5px solid var(--border2);border-radius:var(--radius-sm);padding:12px;font-size:14px;font-weight:500;cursor:pointer}
+.btn-save{background:var(--accent);color:#111;border:none;border-radius:var(--radius-sm);padding:12px;font-size:14px;font-weight:600;cursor:pointer}
+.play-history{margin-top:12px}
+.ph-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid var(--border)}
+.ph-row:last-child{border-bottom:none}
+.ph-date{font-size:13px}
+.ph-del{background:none;border:none;color:var(--red);font-size:13px;cursor:pointer;opacity:0.7;padding:2px 4px}
+.big-play-btn{width:100%;background:var(--accent);color:#111;border:none;border-radius:var(--radius-sm);padding:14px;font-size:15px;font-weight:700;cursor:pointer;margin-top:14px;display:flex;align-items:center;justify-content:center;gap:8px}
+.freq-big{display:flex;align-items:center;gap:10px;margin:12px 0;padding:12px;background:var(--bg3);border-radius:var(--radius-sm)}
+.freq-big-bar{flex:1;height:6px;background:var(--bg4);border-radius:3px;overflow:hidden}
+.freq-big-fill{height:100%;border-radius:3px;background:var(--accent)}
+.coach-header{padding:16px 16px 12px;padding-top:calc(16px + env(safe-area-inset-top,0px))}
+.coach-header h1{font-size:19px;font-weight:700;color:var(--accent);margin-bottom:4px}
+.coach-header p{font-size:12px;color:var(--muted)}
+.coach-section{margin:0 0 20px}
+.coach-title{font-size:13px;font-weight:600;padding:14px 16px 8px;display:flex;align-items:center;gap:8px}
+.coach-subtitle{font-size:11px;color:var(--muted);font-weight:400;margin-left:auto}
+.coach-scroll{display:flex;gap:10px;padding:0 16px 4px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.coach-scroll::-webkit-scrollbar{display:none}
+.coach-card{flex-shrink:0;width:170px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px 13px;cursor:pointer}
+.coach-card:active{border-color:var(--accent)}
+.cc-title{font-size:13px;font-weight:500;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cc-artist{font-size:11px;color:var(--muted);margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cc-stat{font-size:11px;color:var(--muted2)}
+.cc-stat strong{color:var(--text);font-weight:500}
+.cc-bar{height:3px;background:var(--bg4);border-radius:2px;margin-top:6px;overflow:hidden}
+.cc-fill{height:100%;border-radius:2px}
+.badge-forgotten{background:rgba(248,113,113,0.12);color:#f87171;font-size:10px;padding:2px 6px;border-radius:5px;display:inline-block;margin-bottom:6px}
+.badge-hot{background:rgba(251,191,36,0.12);color:#fbbf24;font-size:10px;padding:2px 6px;border-radius:5px;display:inline-block;margin-bottom:6px}
+.badge-new{background:rgba(96,165,250,0.12);color:#60a5fa;font-size:10px;padding:2px 6px;border-radius:5px;display:inline-block;margin-bottom:6px}
+.stats-page{padding:16px;padding-top:calc(16px + env(safe-area-inset-top,0px))}
+.stats-page h1{font-size:19px;font-weight:700;color:var(--accent);margin-bottom:16px}
+.stat-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px}
+.stat-card h3{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:12px}
+.ranking-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:0.5px solid var(--border)}
+.ranking-row:last-child{border-bottom:none}
+.rank-num{font-size:12px;color:var(--muted);width:18px;text-align:right;flex-shrink:0}
+.rank-info{flex:1;min-width:0}
+.rank-title{font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rank-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.rank-count{font-size:13px;font-weight:600;color:var(--accent);flex-shrink:0}
+/* SYNC STATUS */
+.sync-dot{width:6px;height:6px;border-radius:50%;display:inline-block;margin-left:6px;vertical-align:middle}
+.sync-ok{background:var(--green)}.sync-err{background:var(--red)}.sync-loading{background:var(--yellow);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+</style>
+</head>
+<body>
+
+<div class="page on" id="page-list">
+<header>
+  <div class="header-row">
+    <div>
+      <h1>🎸 Mon Répertoire <span class="sync-dot sync-loading" id="sync-dot" title="Synchronisation..."></span></h1>
+      <p id="subtitle">Chargement...</p>
+    </div>
+    <button class="add-btn" onclick="openAddModal()">+ Ajouter</button>
+  </div>
+  <div class="search-wrap">
+    <span class="si">🔍</span>
+    <input type="search" id="search" placeholder="Titre, artiste, style…" autocorrect="off" autocapitalize="off"/>
+    <button class="sc" id="sc" onclick="clearSearch()">✕</button>
+  </div>
+  <div class="chips" id="style-chips"></div>
+  <div class="stabs" id="stabs"></div>
+</header>
+<div class="stats" id="stats"></div>
+<div id="list-content"></div>
+</div>
+
+<div class="page" id="page-coach">
+<div class="coach-header">
+  <h1>🎯 Coach</h1>
+  <p id="coach-subtitle">Suggestions basées sur ton historique</p>
+</div>
+<div id="coach-content"></div>
+</div>
+
+<div class="page" id="page-stats">
+<div class="stats-page">
+  <h1>📊 Statistiques</h1>
+  <div id="stats-content"></div>
+</div>
+</div>
+
+<nav class="bottom-nav">
+  <div class="nav-item on" id="nav-list" onclick="goPage('list')"><span class="ni">🎸</span><span class="nl">Répertoire</span></div>
+  <div class="nav-item" id="nav-coach" onclick="goPage('coach')"><span class="ni">🎯</span><span class="nl">Coach</span></div>
+  <div class="nav-item" id="nav-stats" onclick="goPage('stats')"><span class="ni">📊</span><span class="nl">Stats</span></div>
+  <div class="nav-item" id="nav-add" onclick="openAddModal()"><span class="ni">＋</span><span class="nl">Ajouter</span></div>
+</nav>
+
+<div class="overlay" id="add-overlay" onclick="overlayClick(event,'add-overlay')">
+  <div class="modal">
+    <div class="mhandle"></div>
+    <h2>Ajouter un morceau</h2>
+    <div class="field"><label>Titre *</label><input type="text" id="f-title" placeholder="ex: Comfortably Numb" autocorrect="off"/></div>
+    <div class="field"><label>Artiste *</label><input type="text" id="f-artist" placeholder="ex: Pink Floyd" autocorrect="off"/></div>
+    <div class="row2">
+      <div class="field"><label>Style *</label>
+        <select id="f-style">
+          <option value="">— choisir —</option>
+          <optgroup label="Metal"><option>Metal</option><option>Death metal</option><option>Thrash metal</option><option>Heavy metal</option><option>Nu-metal</option><option>Métal alternatif</option><option>Métal industriel</option></optgroup>
+          <optgroup label="Rock"><option>Rock classique</option><option>Hard rock</option><option>Grunge</option><option>Rock</option><option>Punk rock</option></optgroup>
+          <optgroup label="Blues / Funk"><option>Blues rock</option><option>Blues</option><option>Funk rock</option><option>Funk/soul</option><option>Soul/blues</option><option>Électro/fingerstyle</option></optgroup>
+          <optgroup label="Folk / Acoustique"><option>Folk/fingerstyle</option><option>Folk/pop</option><option>Folk</option><option>Country/folk</option><option>Fingerstyle/OST</option></optgroup>
+          <optgroup label="Pop / Soul"><option>Pop</option><option>Pop/soul</option><option>Pop FR</option></optgroup>
+          <optgroup label="FR"><option>Rap FR</option><option>Variété FR</option><option>Reggae FR</option></optgroup>
+          <optgroup label="Autres"><option>Jazz</option><option>Reggae</option><option>Reggae/folk</option></optgroup>
+        </select>
+      </div>
+      <div class="field"><label>Niveau *</label>
+        <select id="f-diff"><option value="">— choisir —</option><option value="D">Débutant</option><option value="I">Intermédiaire</option><option value="A">Avancé</option></select>
+      </div>
+    </div>
+    <div class="field"><label>Statut *</label>
+      <select id="f-status"><option value="acquired">✅ Acquis</option><option value="todo">🔥 À apprendre</option><option value="archive">📦 Archivé</option></select>
+    </div>
+    <div class="mbtns">
+      <button class="btn-cancel" onclick="closeModal('add-overlay')">Annuler</button>
+      <button class="btn-save" onclick="saveSong()">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="detail-overlay" onclick="overlayClick(event,'detail-overlay')">
+  <div class="modal" id="detail-modal">
+    <div class="mhandle"></div>
+    <div id="detail-content"></div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// SUPABASE CONFIG
+// ─────────────────────────────────────────────
+const SB_URL = "https://tmvnqqcybqwnkfuhcukw.supabase.co";
+const SB_KEY = "sb_publishable_fM-LZf52vw1BIBYWkSDVIQ_SmyowjEz";
+
+async function sbFetch(path, opts={}) {
+  const res = await fetch(SB_URL + "/rest/v1/" + path, {
+    headers: {
+      "apikey": SB_KEY,
+      "Authorization": "Bearer " + SB_KEY,
+      "Content-Type": "application/json",
+      "Prefer": opts.prefer || "return=representation",
+      ...opts.headers
+    },
+    ...opts
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(err);
+  }
+  const text = await res.text();
+  return text ? JSON.parse(text) : [];
+}
+
+function setSyncDot(state) {
+  const d = document.getElementById("sync-dot");
+  if (!d) return;
+  d.className = "sync-dot sync-" + state;
+  d.title = {ok:"Synchronisé", err:"Erreur de sync", loading:"Synchronisation..."}[state] || "";
+}
+
+// ─────────────────────────────────────────────
+// DEFAULT DATA (seed initial si base vide)
+// ─────────────────────────────────────────────
+const DEFAULT=[
+  {t:"Master of Puppets",a:"Metallica",s:"Metal",d:"A",st:"acquired"},
+  {t:"Enter Sandman",a:"Metallica",s:"Metal",d:"I",st:"acquired"},
+  {t:"Battery",a:"Metallica",s:"Metal",d:"A",st:"acquired"},
+  {t:"Sad But True",a:"Metallica",s:"Metal",d:"I",st:"acquired"},
+  {t:"Nothing Else Matters",a:"Metallica",s:"Metal",d:"I",st:"acquired"},
+  {t:"Afterlife",a:"Avenged Sevenfold",s:"Metal",d:"A",st:"acquired"},
+  {t:"Before I Forget",a:"Slipknot",s:"Metal",d:"I",st:"acquired"},
+  {t:"(sic)",a:"Slipknot",s:"Metal",d:"A",st:"acquired"},
+  {t:"Psychosocial",a:"Slipknot",s:"Metal",d:"I",st:"acquired"},
+  {t:"Snuff",a:"Slipknot",s:"Metal",d:"I",st:"acquired"},
+  {t:"Walk",a:"Pantera",s:"Metal",d:"I",st:"acquired"},
+  {t:"The Philosopher",a:"Death",s:"Death metal",d:"A",st:"acquired"},
+  {t:"Raining Blood",a:"Slayer",s:"Thrash metal",d:"A",st:"acquired"},
+  {t:"Toxicity",a:"System of a Down",s:"Métal alternatif",d:"I",st:"acquired"},
+  {t:"B.Y.O.B.",a:"System of a Down",s:"Métal alternatif",d:"A",st:"acquired"},
+  {t:"Fear of the Dark",a:"Iron Maiden",s:"Heavy metal",d:"I",st:"acquired"},
+  {t:"Empire of the Clouds",a:"Iron Maiden",s:"Heavy metal",d:"A",st:"acquired"},
+  {t:"Iron Man",a:"Black Sabbath",s:"Heavy metal",d:"D",st:"acquired"},
+  {t:"Blind",a:"Korn",s:"Nu-metal",d:"I",st:"acquired"},
+  {t:"Du Hast",a:"Rammstein",s:"Métal industriel",d:"I",st:"acquired"},
+  {t:"Sweet Dreams",a:"Marilyn Manson",s:"Métal industriel",d:"D",st:"acquired"},
+  {t:"Crazy Train",a:"Ozzy Osbourne",s:"Heavy metal",d:"I",st:"acquired"},
+  {t:"Bohemian Rhapsody (riff)",a:"Queen",s:"Rock classique",d:"I",st:"acquired"},
+  {t:"Another One Bites the Dust",a:"Queen",s:"Rock classique",d:"D",st:"acquired"},
+  {t:"Hotel California",a:"Eagles",s:"Rock classique",d:"A",st:"acquired"},
+  {t:"Wish You Were Here",a:"Pink Floyd",s:"Rock classique",d:"I",st:"acquired"},
+  {t:"Money (riff basse)",a:"Pink Floyd",s:"Rock classique",d:"I",st:"acquired"},
+  {t:"Stairway to Heaven",a:"Led Zeppelin",s:"Rock classique",d:"A",st:"acquired"},
+  {t:"Whole Lotta Love",a:"Led Zeppelin",s:"Rock classique",d:"I",st:"acquired"},
+  {t:"Still Loving You",a:"Scorpions",s:"Rock classique",d:"A",st:"acquired"},
+  {t:"Rocket Man",a:"Elton John",s:"Rock classique",d:"I",st:"acquired"},
+  {t:"Back in Black",a:"AC/DC",s:"Hard rock",d:"I",st:"acquired"},
+  {t:"Thunderstruck",a:"AC/DC",s:"Hard rock",d:"I",st:"acquired"},
+  {t:"Highway to Hell",a:"AC/DC",s:"Hard rock",d:"D",st:"acquired"},
+  {t:"Come As You Are",a:"Nirvana",s:"Grunge",d:"D",st:"acquired"},
+  {t:"Smells Like Teen Spirit",a:"Nirvana",s:"Grunge",d:"D",st:"acquired"},
+  {t:"Monster",a:"Skillet",s:"Rock",d:"D",st:"acquired"},
+  {t:"Every Breath You Take",a:"The Police",s:"Rock classique",d:"D",st:"acquired"},
+  {t:"Purple Haze",a:"Jimi Hendrix",s:"Blues rock",d:"I",st:"acquired"},
+  {t:"Little Wing (en cours)",a:"Jimi Hendrix",s:"Blues rock",d:"A",st:"todo"},
+  {t:"Slow Dancing in a Burning Room",a:"John Mayer",s:"Blues rock",d:"A",st:"acquired"},
+  {t:"Layla",a:"Eric Clapton",s:"Blues rock",d:"A",st:"acquired"},
+  {t:"Tears in Heaven",a:"Eric Clapton",s:"Blues rock",d:"I",st:"acquired"},
+  {t:"Hey Hey",a:"Eric Clapton",s:"Blues rock",d:"I",st:"acquired"},
+  {t:"Wonderful Tonight",a:"Eric Clapton",s:"Blues rock",d:"D",st:"acquired"},
+  {t:"Can't Stop",a:"RHCP",s:"Funk rock",d:"I",st:"acquired"},
+  {t:"Californication",a:"RHCP",s:"Funk rock",d:"I",st:"acquired"},
+  {t:"Under the Bridge",a:"RHCP",s:"Funk rock",d:"A",st:"acquired"},
+  {t:"Superstition",a:"Stevie Wonder",s:"Funk/soul",d:"I",st:"acquired"},
+  {t:"Sunset Lover",a:"Petit Biscuit",s:"Électro/fingerstyle",d:"I",st:"acquired"},
+  {t:"American Idiot",a:"Green Day",s:"Punk rock",d:"D",st:"acquired"},
+  {t:"Wake Me Up When September Ends",a:"Green Day",s:"Punk rock",d:"D",st:"acquired"},
+  {t:"Ordinary World",a:"Green Day",s:"Punk rock",d:"D",st:"acquired"},
+  {t:"Time of Your Life",a:"Green Day",s:"Punk rock",d:"D",st:"acquired"},
+  {t:"Fake My Own Death",a:"Sum 41",s:"Punk rock",d:"I",st:"acquired"},
+  {t:"The Hell Song",a:"Sum 41",s:"Punk rock",d:"I",st:"acquired"},
+  {t:"Pieces",a:"Sum 41",s:"Punk rock",d:"D",st:"acquired"},
+  {t:"Still Waiting (en cours)",a:"Sum 41",s:"Punk rock",d:"I",st:"todo"},
+  {t:"Welcome to My Life",a:"Simple Plan",s:"Punk rock",d:"D",st:"acquired"},
+  {t:"Summer Paradise",a:"Simple Plan",s:"Punk rock",d:"D",st:"acquired"},
+  {t:"Blackbird",a:"Beatles",s:"Folk/fingerstyle",d:"I",st:"acquired"},
+  {t:"Here Comes the Sun",a:"Beatles",s:"Folk/fingerstyle",d:"I",st:"acquired"},
+  {t:"Let It Be",a:"Beatles",s:"Folk/pop",d:"D",st:"acquired"},
+  {t:"Imagine",a:"John Lennon",s:"Folk/pop",d:"D",st:"acquired"},
+  {t:"Oh My Love",a:"John Lennon",s:"Folk/pop",d:"D",st:"acquired"},
+  {t:"Knockin' on Heaven's Door",a:"Bob Dylan",s:"Folk/pop",d:"D",st:"acquired"},
+  {t:"Blowin' in the Wind",a:"Bob Dylan",s:"Folk/pop",d:"D",st:"acquired"},
+  {t:"Hallelujah (version Shrek)",a:"Jeff Buckley/Cohen",s:"Folk/pop",d:"I",st:"acquired"},
+  {t:"Let Her Go",a:"Passenger",s:"Folk/pop",d:"D",st:"acquired"},
+  {t:"Wild World",a:"Cat Stevens",s:"Folk/pop",d:"D",st:"acquired"},
+  {t:"Thirteen Silver Dollars",a:"Colter Wall",s:"Country/folk",d:"D",st:"acquired"},
+  {t:"Le Bon Rhum de Binks",a:"One Piece OST",s:"Fingerstyle/OST",d:"I",st:"acquired"},
+  {t:"Mrs. Robinson",a:"Simon & Garfunkel",s:"Folk/pop",d:"I",st:"todo"},
+  {t:"The Two of Us",a:"Inconnu",s:"Folk/pop",d:"D",st:"acquired"},
+  {t:"Lemon Tree",a:"Fool's Garden",s:"Pop",d:"D",st:"acquired"},
+  {t:"Wish U Were Gay",a:"Billie Eilish",s:"Pop",d:"D",st:"acquired"},
+  {t:"When I Was Your Man",a:"Bruno Mars",s:"Pop/soul",d:"D",st:"acquired"},
+  {t:"Slipping Through My Fingers",a:"ABBA",s:"Pop",d:"D",st:"todo"},
+  {t:"Il nous faut",a:"Tom Dice & Elisa Tovati",s:"Pop FR",d:"D",st:"acquired"},
+  {t:"Si Facile",a:"Casseurs Flowters",s:"Rap FR",d:"D",st:"acquired"},
+  {t:"Au DD",a:"PNL",s:"Rap FR",d:"D",st:"acquired"},
+  {t:"Mexico",a:"PNL",s:"Rap FR",d:"D",st:"acquired"},
+  {t:"A l'ammoniaque",a:"PNL",s:"Rap FR",d:"D",st:"acquired"},
+  {t:"Amnesie",a:"Damso",s:"Rap FR",d:"D",st:"acquired"},
+  {t:"Je l'aime a mourir",a:"Francis Cabrel",s:"Variété FR",d:"D",st:"acquired"},
+  {t:"Autumn Leaves",a:"Standard Jazz",s:"Jazz",d:"I",st:"acquired"},
+  {t:"Fly Me to the Moon",a:"Frank Sinatra",s:"Jazz",d:"I",st:"acquired"},
+  {t:"No Woman No Cry",a:"Bob Marley",s:"Reggae",d:"D",st:"acquired"},
+  {t:"Redemption Song",a:"Bob Marley",s:"Reggae",d:"D",st:"acquired"},
+  {t:"L'Hymne de nos Campagnes",a:"Tryo",s:"Reggae FR",d:"D",st:"acquired"},
+  {t:"Clandestino",a:"Manu Chao",s:"Reggae/folk",d:"D",st:"acquired"},
+  {t:"Dear God",a:"Avenged Sevenfold",s:"Metal",d:"A",st:"archive"},
+  {t:"With Me",a:"Sum 41",s:"Punk rock",d:"I",st:"archive"},
+  {t:"Angie",a:"Rolling Stones",s:"Rock classique",d:"I",st:"archive"},
+  {t:"Nobody Knows You When You're Down and Out",a:"Eric Clapton",s:"Blues",d:"I",st:"archive"},
+  {t:"Shape of My Heart",a:"Sting",s:"Folk/pop",d:"A",st:"archive"},
+  {t:"Le Coeur en Miettes",a:"Damso",s:"Rap FR",d:"D",st:"archive"},
+  {t:"Nicole",a:"Gravenhurst",s:"Folk",d:"I",st:"archive"},
+  {t:"Ain't No Sunshine",a:"Bill Withers",s:"Soul/blues",d:"I",st:"archive"},
+];
+
+// Sessions initiales à injecter (si base vide)
+const DEFAULT_PLAYS = [
+  {title:"Little Wing", dates:[daysAgo(2), daysAgo(1)]},
+  {title:"American Idiot", dates:[daysAgo(3), daysAgo(0)]},
+  {title:"Sweet Dreams", dates:[daysAgo(0)]},
+  {title:"Crazy Train", dates:[daysAgo(0)]},
+  {title:"Still Waiting", dates:[daysAgo(0)]},
+  {title:"Wish You Were Here", dates:[daysAgo(0)]},
+];
+
+function daysAgo(n) {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  d.setHours(18, 0, 0, 0);
+  return d.toISOString();
+}
+
+// ─────────────────────────────────────────────
+// GROUPES & ALIASES
+// ─────────────────────────────────────────────
+const GROUPS=[
+  {key:"metal",label:"Metal",color:"#e24b4a",styles:["Metal","Death metal","Thrash metal","Métal alternatif","Heavy metal","Nu-metal","Métal industriel"]},
+  {key:"rock",label:"Rock",color:"#ef9f27",styles:["Rock classique","Hard rock","Grunge","Rock"]},
+  {key:"blues",label:"Blues / Funk",color:"#1D9E75",styles:["Blues rock","Funk rock","Funk/soul","Électro/fingerstyle","Blues","Soul/blues"]},
+  {key:"punk",label:"Punk",color:"#a78bfa",styles:["Punk rock"]},
+  {key:"folk",label:"Folk / Acoustique",color:"#5DCAA5",styles:["Folk/fingerstyle","Folk/pop","Country/folk","Fingerstyle/OST","Folk"]},
+  {key:"pop",label:"Pop / Soul",color:"#f472b6",styles:["Pop","Pop/soul","Pop FR"]},
+  {key:"fr",label:"Rap & Variété FR",color:"#D4537E",styles:["Rap FR","Variété FR","Reggae FR"]},
+  {key:"jazz",label:"Jazz",color:"#378ADD",styles:["Jazz"]},
+  {key:"reggae",label:"Reggae",color:"#639922",styles:["Reggae","Reggae/folk"]},
+  {key:"archive",label:"Archivés",color:"#64748b",styles:[]},
+];
+const ALIASES={
+  metal:["metal","thrash","death","heavy","nu-metal","industriel","alternatif","a7x","slipknot","metallica","maiden","sabbath","korn","pantera","slayer","soad","rammstein","manson","ozzy"],
+  rock:["rock classique","hard rock","grunge","classique","floyd","zeppelin","queen","acdc","nirvana","scorpions","eagles","police","elton"],
+  blues:["blues","funk","rhcp","clapton","hendrix","mayer","soul","électro","fingerstyle"],
+  punk:["punk","green day","sum 41","simple plan"],
+  folk:["folk","acoustique","beatles","lennon","dylan","passenger","colter","cat stevens","country"],
+  pop:["pop","billie","abba","bruno"],
+  fr:["rap","variété","francais","pnl","damso","casseurs","cabrel","tryo"],
+  jazz:["jazz","sinatra","autumn"],
+  reggae:["reggae","marley","manu chao"],
+};
+
+// ─────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────
+let SONGS=[], PLAYS={}; // PLAYS[song_id] = [iso_string, ...]
+let activeStyle="all", activeStatus="all", searchQ="";
+let detailId=null;
+
+// ─────────────────────────────────────────────
+// SUPABASE CRUD
+// ─────────────────────────────────────────────
+async function loadFromSupabase() {
+  setSyncDot("loading");
+  try {
+    const [songs, plays] = await Promise.all([
+      sbFetch("songs?select=*&order=id.asc"),
+      sbFetch("plays?select=*&order=played_at.asc")
+    ]);
+
+    // Si base vide, seed le répertoire par défaut
+    if (!songs.length) {
+      showToast("⏳ Initialisation du répertoire...");
+      const inserted = await sbFetch("songs", {
+        method: "POST",
+        prefer: "return=representation",
+        body: JSON.stringify(DEFAULT.map(s => ({
+          title: s.t, artist: s.a, style: s.s, diff: s.d, status: s.st
+        })))
+      });
+      SONGS = inserted.map(s => mapSong(s));
+
+      // Seed sessions initiales
+      const playsToInsert = [];
+      for (const dp of DEFAULT_PLAYS) {
+        const song = SONGS.find(s => s.t.includes(dp.title));
+        if (song) {
+          for (const date of dp.dates) {
+            playsToInsert.push({song_id: song.id, played_at: date});
+          }
+        }
+      }
+      if (playsToInsert.length) {
+        const insertedPlays = await sbFetch("plays", {
+          method: "POST",
+          prefer: "return=representation",
+          body: JSON.stringify(playsToInsert)
+        });
+        buildPlaysMap(insertedPlays);
+      }
+      showToast("✅ Répertoire initialisé !");
+    } else {
+      SONGS = songs.map(s => mapSong(s));
+      buildPlaysMap(plays);
+    }
+
+    setSyncDot("ok");
+    renderList();
+  } catch(e) {
+    console.error(e);
+    setSyncDot("err");
+    showToast("❌ Erreur de connexion");
+    document.getElementById("list-content").innerHTML = `<div class="empty"><div class="empty-icon">📡</div>Impossible de se connecter. Vérifie ta connexion internet.</div>`;
+  }
+}
+
+function mapSong(s) {
+  return {id: s.id, t: s.title, a: s.artist, s: s.style, d: s.diff, st: s.status};
+}
+
+function buildPlaysMap(plays) {
+  PLAYS = {};
+  for (const p of plays) {
+    if (!PLAYS[p.song_id]) PLAYS[p.song_id] = [];
+    PLAYS[p.song_id].push(new Date(p.played_at).getTime());
+  }
+}
+
+async function addSongToDb(song) {
+  const res = await sbFetch("songs", {
+    method: "POST",
+    prefer: "return=representation",
+    body: JSON.stringify({title: song.t, artist: song.a, style: song.s, diff: song.d, status: song.st})
+  });
+  return mapSong(res[0]);
+}
+
+async function deleteSongFromDb(id) {
+  await sbFetch("songs?id=eq." + id, {method: "DELETE", prefer: "return=minimal"});
+}
+
+async function logPlayToDb(songId) {
+  const res = await sbFetch("plays", {
+    method: "POST",
+    prefer: "return=representation",
+    body: JSON.stringify({song_id: songId, played_at: new Date().toISOString()})
+  });
+  if (!PLAYS[songId]) PLAYS[songId] = [];
+  PLAYS[songId].push(new Date(res[0].played_at).getTime());
+  return res[0].id;
+}
+
+async function deletePlayFromDb(playDbId) {
+  await sbFetch("plays?id=eq." + playDbId, {method: "DELETE", prefer: "return=minimal"});
+}
+
+// Pour récupérer les IDs de plays d'une chanson
+async function getPlaysForSong(songId) {
+  return await sbFetch("plays?song_id=eq." + songId + "&order=played_at.desc&select=id,played_at");
+}
+
+// ─────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────
+function groupOf(song) {
+  if (song.st==="archive") return GROUPS.find(g=>g.key==="archive");
+  for (const g of GROUPS) if (g.styles.includes(song.s)) return g;
+  return GROUPS.find(g=>g.key==="archive");
+}
+const DL={A:"Avancé",I:"Intermédiaire",D:"Débutant"};
+const DC={acquired:"dot-acquired",todo:"dot-todo",archive:"dot-archive"};
+
+function fmtDate(ts) {
+  if (!ts) return "—";
+  return new Date(ts).toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"});
+}
+function fmtRelative(ts) {
+  if (!ts) return "jamais joué";
+  const days = Math.floor((Date.now()-ts)/(1000*60*60*24));
+  if (days===0) return "aujourd'hui";
+  if (days===1) return "hier";
+  if (days<7) return `il y a ${days}j`;
+  if (days<30) return `il y a ${Math.floor(days/7)} sem.`;
+  if (days<365) return `il y a ${Math.floor(days/30)} mois`;
+  return `il y a ${Math.floor(days/365)} an${Math.floor(days/365)>1?"s":""}`;
+}
+function daysSince(ts) { return ts ? Math.floor((Date.now()-ts)/(1000*60*60*24)) : Infinity; }
+function playCount(id) { return (PLAYS[id]||[]).length; }
+function lastPlayed(id) { const p=PLAYS[id]; return p&&p.length ? Math.max(...p) : null; }
+function maxPlays() { return Math.max(1,...Object.values(PLAYS).map(p=>p.length)); }
+
+function smartMatch(song,q) {
+  if (!q) return true;
+  const lq=q.toLowerCase().trim();
+  if (song.t.toLowerCase().includes(lq)||song.a.toLowerCase().includes(lq)||song.s.toLowerCase().includes(lq)) return true;
+  for (const [gk,aliases] of Object.entries(ALIASES)) {
+    if (aliases.some(a=>lq.includes(a)||a.startsWith(lq))) {
+      const g=GROUPS.find(g=>g.key===gk);
+      if (g&&g.styles.includes(song.s)) return true;
+    }
+  }
+  return false;
+}
+
+function matchSong(song) {
+  if (activeStatus==="acquired"&&song.st!=="acquired") return false;
+  if (activeStatus==="todo"&&song.st!=="todo") return false;
+  if (activeStatus==="archive"&&song.st!=="archive") return false;
+  if (activeStyle!=="all") {
+    if (activeStyle==="archive") { if (song.st!=="archive") return false; }
+    else {
+      const g=GROUPS.find(g=>g.key===activeStyle);
+      if (!g||!g.styles.includes(song.s)||song.st==="archive") return false;
+    }
+  }
+  return smartMatch(song,searchQ);
+}
+
+// ─────────────────────────────────────────────
+// RENDER LIST
+// ─────────────────────────────────────────────
+function renderList() {
+  document.getElementById("subtitle").textContent=`${SONGS.filter(s=>s.st==="acquired").length} acquis · ${SONGS.filter(s=>s.st==="todo").length} à apprendre · ${SONGS.length} total`;
+  const pool=SONGS.filter(s=>activeStatus==="all"||s.st===activeStatus);
+  const cnt={};
+  for (const g of GROUPS) cnt[g.key]=g.key==="archive"?pool.filter(s=>s.st==="archive").length:pool.filter(s=>s.st!=="archive"&&g.styles.includes(s.s)).length;
+  const vis=[{key:"all",label:"Tout",color:"#c8a96e"},...GROUPS.filter(g=>cnt[g.key]>0)];
+  document.getElementById("style-chips").innerHTML=vis.map(g=>
+    `<div class="chip${activeStyle===g.key?" on":""}" onclick="setStyle('${g.key}')"><span class="chip-dot" style="background:${g.color}"></span>${g.label}${g.key!=="all"?` <span style="opacity:0.5;font-size:10px">${cnt[g.key]}</span>`:""}</div>`
+  ).join("");
+  const tabs=[{id:"all",label:"Tout"},{id:"acquired",label:"✅ Acquis"},{id:"todo",label:"🔥 À apprendre"},{id:"archive",label:"📦 Archivés"}];
+  document.getElementById("stabs").innerHTML=tabs.map(t=>`<div class="stab${activeStatus===t.id?" on":""}" onclick="setStatus('${t.id}')">${t.label}</div>`).join("");
+  const filtered=SONGS.filter(matchSong);
+  const acq=filtered.filter(s=>s.st==="acquired").length;
+  const td=filtered.filter(s=>s.st==="todo").length;
+  const played=filtered.filter(s=>playCount(s.id)>0).length;
+  document.getElementById("stats").innerHTML=[
+    {n:filtered.length,l:"affichés",c:"var(--accent)"},
+    {n:acq,l:"acquis",c:"var(--green)"},
+    {n:td,l:"à apprendre",c:"var(--orange)"},
+    {n:played,l:"joués",c:"var(--blue)"},
+  ].map(s=>`<div class="stat"><div class="stat-n" style="color:${s.c}">${s.n}</div><div class="stat-l">${s.l}</div></div>`).join("");
+  const byGroup={};
+  const mp=maxPlays();
+  for (const song of filtered) {
+    const g=groupOf(song);
+    const key=song.st==="archive"?"archive":g.key;
+    if (!byGroup[key]) byGroup[key]={g:GROUPS.find(x=>x.key===key)||g,songs:[]};
+    byGroup[key].songs.push(song);
+  }
+  if (!filtered.length) {
+    document.getElementById("list-content").innerHTML=`<div class="empty"><div class="empty-icon">🎸</div>Aucun résultat${searchQ?` pour "${searchQ}"`:""}.</div>`;
+    return;
+  }
+  document.getElementById("list-content").innerHTML=GROUPS.map(g=>{
+    if (!byGroup[g.key]) return "";
+    const songs=byGroup[g.key].songs;
+    return `<div class="section">
+      <div class="sec-label"><span class="sec-dot" style="background:${g.color}"></span>${g.label} <span style="opacity:0.4;font-weight:400;text-transform:none;letter-spacing:0">(${songs.length})</span></div>
+      <div class="sgroup">${songs.map(s=>{
+        const pc=playCount(s.id), lp=lastPlayed(s.id), pct=Math.round(pc/mp*100);
+        return `<div class="song" onclick="openDetail(${s.id})">
+          <span class="sdot ${DC[s.st]||"dot-archive"}"></span>
+          <div class="si2">
+            <div class="stitle">${s.t}</div>
+            <div class="smeta">
+              <span style="color:${g.color};opacity:0.85">${s.a}</span>
+              ${pc>0?`<span class="last-played">· ${fmtRelative(lp)} · ${pc}×</span>`:`<span class="last-played" style="opacity:0.4">· jamais joué</span>`}
+            </div>
+            ${pc>0?`<div class="freq-bar"><div class="freq-fill" style="width:${pct}%"></div></div>`:""}
+          </div>
+          <div class="sright">
+            <span class="dbadge diff-${s.d}">${DL[s.d]||s.d}</span>
+            <button class="play-btn" onclick="event.stopPropagation();quickPlay(${s.id})" title="J'ai joué ce morceau">▶</button>
+          </div>
+        </div>`;
+      }).join("")}
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function setStyle(k){activeStyle=k;renderList();}
+function setStatus(k){activeStatus=k;activeStyle="all";renderList();}
+function clearSearch(){document.getElementById("search").value="";searchQ="";document.getElementById("sc").style.display="none";renderList();}
+
+async function quickPlay(id) {
+  setSyncDot("loading");
+  try {
+    await logPlayToDb(id);
+    setSyncDot("ok");
+    renderList();
+    showToast("✓ Session enregistrée !");
+    if (document.getElementById("page-coach").classList.contains("on")) renderCoach();
+  } catch(e) {
+    setSyncDot("err");
+    showToast("❌ Erreur d'enregistrement");
+  }
+}
+
+// ─────────────────────────────────────────────
+// DETAIL MODAL
+// ─────────────────────────────────────────────
+let songPlaysCache = [];
+
+async function openDetail(id) {
+  detailId = id;
+  document.getElementById("detail-content").innerHTML = `<div class="empty"><div class="empty-icon">⏳</div>Chargement...</div>`;
+  document.getElementById("detail-overlay").classList.add("open");
+  try {
+    songPlaysCache = await getPlaysForSong(id);
+    renderDetail();
+  } catch(e) {
+    document.getElementById("detail-content").innerHTML = `<div class="empty">Erreur de chargement</div>`;
+  }
+}
+
+function renderDetail() {
+  const song=SONGS.find(s=>s.id===detailId);
+  if (!song) return;
+  const g=groupOf(song);
+  const pc=songPlaysCache.length;
+  const mp=maxPlays();
+  const pct=Math.round(pc/mp*100);
+  const lp=pc?new Date(songPlaysCache[0].played_at).getTime():null;
+  document.getElementById("detail-content").innerHTML=`
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:14px">
+      <span class="sdot ${DC[song.st]||"dot-archive"}" style="width:10px;height:10px;margin-top:4px;flex-shrink:0"></span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:17px;font-weight:600;margin-bottom:3px">${song.t}</div>
+        <div style="font-size:13px;color:${g.color}">${song.a} · <span style="color:var(--muted)">${song.s}</span></div>
+      </div>
+      <span class="dbadge diff-${song.d}" style="margin-top:2px">${DL[song.d]||song.d}</span>
+    </div>
+    <div class="freq-big">
+      <div>
+        <div style="font-size:22px;font-weight:700;color:var(--accent);line-height:1">${pc}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">session${pc!==1?"s":""}</div>
+      </div>
+      <div class="freq-big-bar"><div class="freq-big-fill" style="width:${pct}%"></div></div>
+      <div style="text-align:right">
+        <div style="font-size:13px;font-weight:500">${lp?fmtRelative(lp):"—"}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">dernière fois</div>
+      </div>
+    </div>
+    <button class="big-play-btn" onclick="logPlayFromDetail()">▶ J'ai joué ce morceau</button>
+    ${pc>0?`
+    <div class="play-history">
+      <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px">Historique</div>
+      ${songPlaysCache.map((p,i)=>`<div class="ph-row"><span class="ph-date">${fmtDate(new Date(p.played_at).getTime())}</span><button class="ph-del" onclick="deletePlayEntry(${p.id},${i})" title="Supprimer">✕</button></div>`).join("")}
+    </div>`:""}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px">
+      <button class="btn-cancel" onclick="closeModal('detail-overlay')" style="font-size:13px;padding:10px">Fermer</button>
+      <button class="btn-cancel" onclick="confirmDelete(${song.id})" style="font-size:13px;padding:10px;color:var(--red);border-color:rgba(248,113,113,0.3)">Supprimer</button>
+    </div>`;
+}
+
+async function logPlayFromDetail() {
+  setSyncDot("loading");
+  try {
+    const res = await logPlayToDb(detailId);
+    songPlaysCache = await getPlaysForSong(detailId);
+    setSyncDot("ok");
+    renderDetail();
+    renderList();
+    showToast("✓ Session enregistrée !");
+  } catch(e) {
+    setSyncDot("err");
+    showToast("❌ Erreur");
+  }
+}
+
+async function deletePlayEntry(playDbId, idx) {
+  setSyncDot("loading");
+  try {
+    await deletePlayFromDb(playDbId);
+    PLAYS[detailId] = (PLAYS[detailId]||[]).filter((_,i)=>i!==idx);
+    songPlaysCache = await getPlaysForSong(detailId);
+    setSyncDot("ok");
+    renderDetail();
+    renderList();
+  } catch(e) {
+    setSyncDot("err");
+    showToast("❌ Erreur suppression");
+  }
+}
+
+async function confirmDelete(id) {
+  if (!confirm("Supprimer ce morceau définitivement ?")) return;
+  setSyncDot("loading");
+  try {
+    await deleteSongFromDb(id);
+    SONGS = SONGS.filter(s=>s.id!==id);
+    delete PLAYS[id];
+    setSyncDot("ok");
+    closeModal("detail-overlay");
+    renderList();
+    showToast("🗑 Morceau supprimé");
+  } catch(e) {
+    setSyncDot("err");
+    showToast("❌ Erreur suppression");
+  }
+}
+
+// ─────────────────────────────────────────────
+// COACH
+// ─────────────────────────────────────────────
+function renderCoach() {
+  const active=SONGS.filter(s=>s.st==="acquired");
+  const now=Date.now();
+  const forgotten=active.filter(s=>{const lp=lastPlayed(s.id);return !lp||daysSince(lp)>30;}).sort((a,b)=>daysSince(lastPlayed(a.id))-daysSince(lastPlayed(b.id))).slice(0,10);
+  const hot=active.map(s=>({...s,recent:(PLAYS[s.id]||[]).filter(ts=>now-ts<30*24*3600*1000).length})).filter(s=>s.recent>0).sort((a,b)=>b.recent-a.recent).slice(0,8);
+  const toLearn=SONGS.filter(s=>s.st==="todo").slice(0,6);
+  const styleCounts={};
+  for (const g of GROUPS.filter(g=>g.key!=="archive")) {
+    const songs=active.filter(s=>g.styles.includes(s.s));
+    const total=songs.reduce((acc,s)=>{return acc+(PLAYS[s.id]||[]).filter(ts=>now-ts<60*24*3600*1000).length;},0);
+    if (songs.length>=2) styleCounts[g.key]={g,songs,totalPlays:total,avg:total/songs.length};
+  }
+  const neglectedStyles=Object.values(styleCounts).sort((a,b)=>a.avg-b.avg).slice(0,3);
+  let html="";
+  if (forgotten.length) {
+    html+=`<div class="coach-section"><div class="coach-title">😴 Morceaux oubliés <span class="coach-subtitle">${forgotten.length} morceau${forgotten.length>1?"x":""}</span></div>
+    <div class="coach-scroll">${forgotten.map(s=>{const g=groupOf(s);const lp=lastPlayed(s.id);const days=daysSince(lp);
+      return`<div class="coach-card" onclick="openDetail(${s.id})"><div class="badge-forgotten">${lp?days+"j sans jouer":"jamais joué"}</div><div class="cc-title">${s.t}</div><div class="cc-artist">${s.a}</div><div class="cc-stat"><strong style="color:${g.color}">${s.s}</strong></div><div class="cc-bar"><div class="cc-fill" style="width:${Math.round(playCount(s.id)/maxPlays()*100)}%;background:var(--red)"></div></div></div>`;
+    }).join("")}</div></div>`;
+  }
+  if (hot.length) {
+    html+=`<div class="coach-section"><div class="coach-title">🔥 Tes favoris du moment <span class="coach-subtitle">30 derniers jours</span></div>
+    <div class="coach-scroll">${hot.map(s=>{const g=groupOf(s);
+      return`<div class="coach-card" onclick="openDetail(${s.id})"><div class="badge-hot">${s.recent}× ce mois</div><div class="cc-title">${s.t}</div><div class="cc-artist">${s.a}</div><div class="cc-stat"><strong style="color:${g.color}">${s.s}</strong></div><div class="cc-bar"><div class="cc-fill" style="width:${Math.round(s.recent/hot[0].recent*100)}%;background:var(--yellow)"></div></div></div>`;
+    }).join("")}</div></div>`;
+  }
+  if (neglectedStyles.length) {
+    html+=`<div class="coach-section"><div class="coach-title">🎨 Styles à revisiter</div>
+    <div class="coach-scroll">${neglectedStyles.map(({g,songs,totalPlays})=>{const pick=songs.sort((a,b)=>daysSince(lastPlayed(a.id))-daysSince(lastPlayed(b.id))).slice(0,3);
+      return`<div class="coach-card" onclick="setStyleAndGo('${g.key}')"><div style="display:flex;align-items:center;gap:6px;margin-bottom:8px"><span style="width:8px;height:8px;border-radius:50%;background:${g.color};display:inline-block"></span><span style="font-size:13px;font-weight:600">${g.label}</span></div><div class="cc-stat" style="margin-bottom:4px"><strong>${songs.length}</strong> morceaux · <strong>${totalPlays}</strong> sessions/60j</div><div style="font-size:11px;color:var(--muted);margin-top:6px">${pick.map(s=>"• "+s.t).join("<br>")}</div></div>`;
+    }).join("")}</div></div>`;
+  }
+  if (toLearn.length) {
+    html+=`<div class="coach-section"><div class="coach-title">📚 À apprendre <span class="coach-subtitle">${SONGS.filter(s=>s.st==="todo").length} en liste</span></div>
+    <div class="coach-scroll">${toLearn.map(s=>{const g=groupOf(s);
+      return`<div class="coach-card" onclick="openDetail(${s.id})"><div class="badge-new">À apprendre</div><div class="cc-title">${s.t}</div><div class="cc-artist">${s.a}</div><div class="cc-stat"><strong style="color:${g.color}">${s.s}</strong> · <strong>${DL[s.d]}</strong></div></div>`;
+    }).join("")}</div></div>`;
+  }
+  if (!html) html=`<div class="empty"><div class="empty-icon">🎯</div>Enregistre tes sessions pour recevoir des suggestions !</div>`;
+  document.getElementById("coach-content").innerHTML=html;
+}
+function setStyleAndGo(k){activeStyle=k;activeStatus="acquired";goPage("list");}
+
+// ─────────────────────────────────────────────
+// STATS
+// ─────────────────────────────────────────────
+function renderStats() {
+  const active=SONGS.filter(s=>s.st==="acquired");
+  const allPlays=Object.entries(PLAYS).map(([id,arr])=>({id:parseInt(id),count:arr.length}));
+  const totalSessions=Object.values(PLAYS).reduce((a,b)=>a+b.length,0);
+  const top=allPlays.sort((a,b)=>b.count-a.count).slice(0,10);
+  const topHtml=top.length?top.map((p,i)=>{const s=SONGS.find(x=>x.id===p.id);if(!s)return"";const g=groupOf(s);
+    return`<div class="ranking-row"><span class="rank-num">${i+1}</span><div class="rank-info"><div class="rank-title">${s.t}</div><div class="rank-sub" style="color:${g.color}">${s.a}</div></div><span class="rank-count">${p.count}×</span></div>`;
+  }).join(""):`<div style="color:var(--muted);font-size:13px;padding:8px 0">Pas encore de sessions.</div>`;
+  const styleStats={};
+  for (const g of GROUPS.filter(x=>x.key!=="archive")) {
+    const ids=active.filter(s=>g.styles.includes(s.s)).map(s=>s.id);
+    const total=ids.reduce((a,id)=>a+(PLAYS[id]||[]).length,0);
+    if (total>0) styleStats[g.key]={g,total};
+  }
+  const styleList=Object.values(styleStats).sort((a,b)=>b.total-a.total);
+  const styleHtml=styleList.length?styleList.map(({g,total})=>
+    `<div class="ranking-row"><span class="sec-dot" style="background:${g.color};width:8px;height:8px;flex-shrink:0"></span><div class="rank-info"><div class="rank-title">${g.label}</div></div><span class="rank-count">${total}×</span></div>`
+  ).join(""):`<div style="color:var(--muted);font-size:13px;padding:8px 0">Pas encore de données.</div>`;
+  document.getElementById("stats-content").innerHTML=`
+    <div class="stat-card" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px;padding:14px">
+      <div style="text-align:center"><div style="font-size:26px;font-weight:700;color:var(--accent)">${totalSessions}</div><div style="font-size:10px;color:var(--muted);margin-top:2px">sessions totales</div></div>
+      <div style="text-align:center"><div style="font-size:26px;font-weight:700;color:var(--green)">${SONGS.filter(s=>s.st==="acquired").length}</div><div style="font-size:10px;color:var(--muted);margin-top:2px">acquis</div></div>
+      <div style="text-align:center"><div style="font-size:26px;font-weight:700;color:var(--blue)">${Object.keys(PLAYS).filter(id=>PLAYS[id]&&PLAYS[id].length>0).length}</div><div style="font-size:10px;color:var(--muted);margin-top:2px">morceaux joués</div></div>
+    </div>
+    <div class="stat-card"><h3>🏆 Morceaux les plus joués</h3>${topHtml}</div>
+    <div class="stat-card"><h3>🎨 Sessions par style</h3>${styleHtml}</div>`;
+}
+
+// ─────────────────────────────────────────────
+// NAVIGATION
+// ─────────────────────────────────────────────
+function goPage(name) {
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("on"));
+  document.querySelectorAll(".nav-item").forEach(n=>n.classList.remove("on"));
+  document.getElementById("page-"+name).classList.add("on");
+  document.getElementById("nav-"+name).classList.add("on");
+  if (name==="coach") renderCoach();
+  if (name==="stats") renderStats();
+  if (name==="list") renderList();
+}
+
+// ─────────────────────────────────────────────
+// ADD MODAL
+// ─────────────────────────────────────────────
+function openAddModal(){document.getElementById("add-overlay").classList.add("open");setTimeout(()=>document.getElementById("f-title").focus(),120);}
+function closeModal(id){document.getElementById(id).classList.remove("open");}
+function overlayClick(e,id){if(e.target===document.getElementById(id))closeModal(id);}
+
+async function saveSong() {
+  const t=document.getElementById("f-title").value.trim();
+  const a=document.getElementById("f-artist").value.trim();
+  const s=document.getElementById("f-style").value;
+  const d=document.getElementById("f-diff").value;
+  const st=document.getElementById("f-status").value;
+  if (!t||!a||!s||!d){alert("Merci de remplir tous les champs.");return;}
+  setSyncDot("loading");
+  try {
+    const newSong = await addSongToDb({t,a,s,d,st});
+    SONGS.push(newSong);
+    setSyncDot("ok");
+    closeModal("add-overlay");
+    ["f-title","f-artist"].forEach(id=>document.getElementById(id).value="");
+    document.getElementById("f-style").value="";
+    document.getElementById("f-diff").value="";
+    document.getElementById("f-status").value="acquired";
+    renderList();
+    showToast("✓ Morceau ajouté !");
+  } catch(e) {
+    setSyncDot("err");
+    showToast("❌ Erreur d'ajout");
+  }
+}
+
+// ─────────────────────────────────────────────
+// TOAST
+// ─────────────────────────────────────────────
+function showToast(msg) {
+  let t=document.getElementById("toast");
+  if (!t){t=document.createElement("div");t.id="toast";t.style.cssText="position:fixed;top:calc(20px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);background:#222;color:#f0f0f0;padding:8px 18px;border-radius:20px;font-size:13px;z-index:999;transition:opacity 0.3s;pointer-events:none;white-space:nowrap;border:0.5px solid rgba(255,255,255,0.15)";document.body.appendChild(t);}
+  t.textContent=msg;t.style.opacity="1";
+  clearTimeout(t._timer);t._timer=setTimeout(()=>{t.style.opacity="0";},2000);
+}
+
+// ─────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────
+document.getElementById("search").addEventListener("input",e=>{
+  searchQ=e.target.value;
+  document.getElementById("sc").style.display=searchQ?"flex":"none";
+  renderList();
+});
+
+loadFromSupabase();
+</script>
+</body>
+</html>
